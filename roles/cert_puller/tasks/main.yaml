@@ -1,13 +1,13 @@
 ---
-- name: Ensure local destination directory exists
+- name: "Ensure local destination directory exists"
   ansible.builtin.file:
     path: "{{ cert_local_dest }}"
     state: directory
     mode: '0700'
 
-- name: Find and Fetch Certificates
+- name: "Find and Fetch Certificates"
   block:
-    - name: Search for the correct cert folder on remote host
+    - name: "Search for the correct cert folder on remote host"
       become: true
       ansible.builtin.shell: |
         for dir in {{ cert_source_dir }}/npm-*; do
@@ -25,11 +25,11 @@
       changed_when: false
       failed_when: remote_cert_path.rc != 0
 
-    - name: Set fact for the identified source directory
+    - name: "Set fact for the identified source directory"
       ansible.builtin.set_fact:
         identified_src: "{{ remote_cert_path.stdout }}"
 
-    - name: Fetch the .pem files from identified folder
+    - name: "Fetch the .pem files from identified folder"
       become: true
       ansible.builtin.fetch:
         src: "{{ identified_src }}/{{ item }}"
@@ -44,7 +44,7 @@
       remote_user: "{{ cert_source_user }}"
       register: cert_fetch_results
 
-    - name: Set permissions on retrieved certificate files
+    - name: "Set permissions on retrieved certificate files"
       ansible.builtin.file:
         path: "{{ cert_local_dest }}/{{ item }}"
         mode: '0600'
@@ -55,25 +55,25 @@
         - fullchain.pem
       delegate_to: localhost
 
-    - name: Show if files were actually updated
+    - name: "Show if files were actually updated"
       ansible.builtin.debug:
         msg: "New certificates synchronized for {{ target_domain }} from {{ identified_src }}"
       when: cert_fetch_results.changed
 
-    - name: Record if cert was updated
+    - name: "Record if cert was updated"
       delegate_to: localhost
       delegate_facts: true
       ansible.builtin.set_fact:
         new_certs_pulled: "{{ cert_fetch_results.changed }}"
 
-    - name: Ensure the certificate updated marker file exists
+    - name: "Ensure the certificate updated marker file exists"
       ansible.builtin.file:
         path: "{{ cert_marker }}"
         state: touch
         mode: '0644'
       when: cert_fetch_results.changed
-      
+
   rescue:
-    - name: Handle missing certificates
+    - name: "Handle missing certificates"
       ansible.builtin.fail:
         msg: "Could not find a certificate matching {{ target_domain }} on {{ cert_source_host }}."

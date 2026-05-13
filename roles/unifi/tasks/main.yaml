@@ -1,7 +1,6 @@
 ---
-# upload and activate a new cerfificate to a unifi cloudkey, supports ECC certs
+# uploads and activate a new cerfificate to a unifi cloudkey, supports ECC certs
 # todo:
-# * remove expired certs
 # some fail safe/sanity checks
 
 - name: "Login to cloudkey"

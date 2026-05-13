@@ -1,12 +1,4 @@
 ---
-# deployment playbook for letsencrypt certificates, created for example with certbot.
-# I'm using nginx proxy manager to manage certificates, which creates ECC certs
-# and by that, forced me to rewrite most of the script I had been using with RSA certs.
-# the roles included can distribute and install certs on following system (version tested with)
-# - unifi cloudkey gen2 (4.4.3)
-# - proxmox (9.1.1)
-# - synology nas (dsm 7.2.2)
-#
 # usage:
 # ansible-playbook deploy.yaml
 # ansible-playbook deploy.yaml --limit localhost,some.server.se

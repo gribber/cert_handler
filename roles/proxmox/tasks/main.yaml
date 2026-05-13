@@ -1,42 +1,42 @@
 ---
 
-- name: Create temporary directory
+- name: "Create temporary directory"
   file:
     path: "{{ tmp_cert_dir }}"
     state: directory
     mode: '0700'
 
-- name: Copy certificate to temporary directory
+- name: "Copy certificate to temporary directory"
   copy:
     src: "{{ cert_source_path }}/{{ fullchain }}"
     dest: "{{ tmp_cert_dir }}/pve-ssl.pem"
     mode: '0640'
 
-- name: Copy private key to temporary directory
+- name: "Copy private key to temporary directory"
   copy:
     src: "{{ cert_source_path }}/{{ key }}"
     dest: "{{ tmp_cert_dir }}/pve-ssl.key"
     mode: '0640'
 
-- name: Copy certificate into pmxcfs (pmxcfs-safe)
+- name: "Copy certificate into pmxcfs (pmxcfs-safe)"
   command: cp "{{ tmp_cert_dir }}/pve-ssl.pem" /etc/pve/local/pve-ssl.pem
 
-- name: Copy key into pmxcfs (pmxcfs-safe)
+- name: "Copy key into pmxcfs (pmxcfs-safe)"
   command: cp "{{ tmp_cert_dir }}/pve-ssl.key" /etc/pve/local/pve-ssl.key
 
-- name: Set correct permissions on key
+- name: "Set correct permissions on key"
   file:
     path: /etc/pve/local/pve-ssl.key
     owner: root
     group: www-data
     mode: '0640'
 
-- name: Reload pveproxy
+- name: "Reload pveproxy"
   systemd:
     name: pveproxy
     state: reloaded
 
-- name: Remove temporary directory
+- name: "Remove temporary directory"
   file:
     path: "{{ tmp_cert_dir }}"
     state: absent

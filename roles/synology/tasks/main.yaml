@@ -1,6 +1,8 @@
 ---
 # this works but will most likely need some work
-# in case other services uses the same certs
+# in case other services uses the same certs.
+# see it as a work in progress, contributions and suggestions are welcome
+
 - name: "Get default cert"
   become: yes
   slurp:
@@ -49,7 +51,7 @@
     remote_src: true
     mode: '0400'
 
-- name: Find directories containing existing certificates
+- name: "Find directories containing existing certificates"
   become: yes
   ansible.builtin.find:
     paths: "{{ synology_package_cert_path }}"
@@ -58,11 +60,11 @@
     file_type: file
   register: found_certs
 
-- name: show vars
-  debug:
-    msg: "packages: {{ synology_pkg_services }}"
+# - name: show vars
+#   debug:
+#     msg: "packages: {{ synology_pkg_services }}"
 
-- name: Copy new certs to discovered package folders
+- name: "Copy new certs to discovered package folders"
   become: yes
   ansible.builtin.copy:
     src: "{{ original_user_home }}/{{ cert_dest_tmpdir }}/"
@@ -75,10 +77,10 @@
     label: "{{ item.path | dirname }}"
   notify: "Restart Synology Packages"
 
-- name: Sync Handlers
+- name: "Sync Handlers"
   meta: flush_handlers # Optional: forces the restart to happen NOW before moving to next tasks
 
-# - name: Restart Synology packages if they are enabled
+# - name: "Restart Synology packages if they are enabled"
 #   become: yes
 #   ansible.builtin.shell: >
 #     /usr/syno/bin/synopkg is_onoff "{{ item }}" > /dev/null 2>&1 && 

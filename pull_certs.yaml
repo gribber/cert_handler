@@ -1,4 +1,6 @@
 ---
+# Pull certs from remote NPM server
+#
 - name: Sync certificates from host
   hosts: localhost
   roles:
