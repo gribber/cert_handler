@@ -1,0 +1,16 @@
+---
+# The host that currently has the certificates
+cert_source_host: "npm.host.se"
+cert_source_user: "npmuser"
+
+# Paths on the remote source
+cert_source_dir: "/root/npm/letsencrypt/live"
+
+# Path on the local machine (where this playbook runs)
+cert_local_dest: "{{ cert_source_path }}"
+
+# The specific domain we are looking for
+target_domain: "some.cooldomain.se"
+
+# Cert marker
+cert_updated_marker: "/tmp/cert_updated_marker"

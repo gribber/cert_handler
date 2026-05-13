@@ -1,0 +1,11 @@
+---
+# base location of synology certs
+synology_cert_path: "/usr/syno/etc/certificate/_archive"
+synology_package_cert_path: "/usr/local/etc/certificate"
+# default cert id
+synology_default_cert_file: "{{ synology_cert_path }}/DEFAULT"
+# info about cert for each service
+synology_cert_info_file: "{{ synology_cert_path }}/INFO"
+
+local_cert_dir: "{{ cert_source_path }}"
+cert_dest_tmpdir: "unifi_certs_{{ ansible_date_time.epoch }}"

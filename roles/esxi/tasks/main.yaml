@@ -1,0 +1,43 @@
+---
+# copy and install certs
+# this in an old version, does not support EC certs
+
+# esx 6.7 requires rsa certs
+    
+# - name: check if crt exist
+#   stat: path=/etc/vmware/ssl/rui.crt
+#   register: crt_stat
+
+# - name: make backup copy of old crt file
+#   command: mv /etc/vmware/ssl/rui.crt /etc/vmware/ssl/rui.crt.old
+#   when: crt_stat.stat.exists
+
+# - name: check if key exist
+#   stat: path=/etc/vmware/ssl/rui.key
+#   register: key_stat
+
+# - name: make backup copy of old key file
+#   command: mv /etc/vmware/ssl/rui.key /etc/vmware/ssl/rui.key.old
+#   when: key_stat.stat.exists
+
+# - name: create rui.crt
+#   command: cat {{ cert_source_path }}/{{ cert }} {{ cert_source_path }}/{{ chain }} > {{ cert_source_path }}/rui.crt
+
+# - name: copy crt file
+#   copy:
+#     src: "{{ cert_source_path }}/{{ fullchain }}"
+#     dest: /etc/vmware/ssl/rui.crt
+#     mode: '0644'
+
+# - name: copy key file
+#   copy:
+#     src: "{{ cert_source_path }}/{{ key }}"
+#     dest: /etc/vmware/ssl/rui.key
+#     mode: '0600'
+
+# - name: restart hostd
+#   command: /etc/init.d/hostd restart
+
+# - name: restart vxpa
+#   command: /etc/init.d/vpxa restart
+

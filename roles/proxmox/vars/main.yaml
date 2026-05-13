@@ -1,0 +1,2 @@
+---
+tmp_cert_dir: "/tmp/pve_cert_{{ ansible_date_time.epoch }}"

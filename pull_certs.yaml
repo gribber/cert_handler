@@ -1,0 +1,5 @@
+---
+- name: Sync certificates from host
+  hosts: localhost
+  roles:
+    - cert_puller

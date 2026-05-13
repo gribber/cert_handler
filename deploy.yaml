@@ -1,0 +1,61 @@
+---
+# deployment playbook for letsencrypt certificates, created for example with certbot.
+# I'm using nginx proxy manager to manage certificates, which creates ECC certs
+# and by that, forced me to rewrite most of the script I had been using with RSA certs.
+# the roles included can distribute and install certs on following system (version tested with)
+# - unifi cloudkey gen2 (4.4.3)
+# - proxmox (9.1.1)
+# - synology nas (dsm 7.2.2)
+#
+# usage:
+# ansible-playbook deploy.yaml
+# ansible-playbook deploy.yaml --limit localhost,some.server.se
+#
+# you can specify to just pull certs or deploy with the variables pull_certs and deploy_certs, like
+# ansible-playbook deploy.yaml -e pull_certs=true -e deploy_certs=false
+#
+
+- name: Sync certificates from host
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: show info
+      debug:
+        msg:
+          - "pull_certs: {{ pull_certs | bool }}"
+          - "deploy_certs: {{ deploy_certs | bool }}"
+    - name: "Pull certs if requested"
+      include_role:
+        name: cert_puller
+      when: pull_certs | bool
+
+- name: Deploy new certs
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Deploy certs if new ones retrieved
+      when: 
+        - hostvars['localhost']['new_certs_pulled'] | default(false)
+        - deploy_certs | bool
+      block:
+        - name: Install certs on unifi
+          include_role:
+            name: unifi
+          #when: "'unifi' in hostvars[inventory_hostname].group_names"
+          when: "'unifi' in group_names"
+
+        - name: Install certs on esxi hosts
+          include_role:
+            name: esxi
+          when: "'esx' in group_names"
+
+        - name: Install certs on synology hosts
+          include_role:
+            name: synology
+          when: "'synology' in group_names"
+
+        - name: Install certs on proxmox hosts
+          include_role:
+            name: proxmox
+          when: "'proxmox' in group_names"

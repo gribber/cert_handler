@@ -1,0 +1,118 @@
+---
+# upload and activate a new cerfificate to a unifi cloudkey, supports ECC certs
+# todo:
+# * remove expired certs
+# some fail safe/sanity checks
+
+- name: "Login to cloudkey"
+  ansible.builtin.uri:
+    url: "https://{{ unifi_hostname }}/api/auth/login"
+    method: POST
+    body_format: json
+    validate_certs: false
+    body:
+      username: "{{ unifi_username }}"
+      password: "{{ unifi_password }}"
+    status_code: 200
+    return_content: true
+  register: unifi_login
+
+- name: "Fail if tokes does not exist"
+  fail:
+    msg: "Login failed: no token cookie returned"
+  when: unifi_login.cookies.TOKEN is not defined
+
+- name: "Get list of certs"
+  ansible.builtin.uri:
+    url: "https://{{ unifi_hostname }}/api/userCertificates"
+    method: GET
+    validate_certs: false
+    headers:
+      Cookie: "{{ unifi_login.cookies_string }}"
+    return_content: true
+  register: current_certs
+
+- name: "Show current certs"
+  debug:
+    msg: "cert: {{ item.name }}, fingerprint: {{ item.fingerprint }}, active: {{ item.active }}, id: {{ item.id }}"
+  loop: "{{ current_certs.json }}"
+  loop_control:
+    loop_var: item
+    label: "{{ item.name }}"
+
+- name: "Get sha1 fingerprint of local cert"
+  delegate_to: localhost
+  ansible.builtin.command: "openssl x509 -in {{ unifi_cert_file }} -noout -fingerprint -sha1"
+  register: raw_cert_fingerprint
+
+- name: "Set fingerprint fact"
+  set_fact:
+    cert_fingerprint: "{{ raw_cert_fingerprint.stdout.split('=')[1] | trim }}"
+  when: raw_cert_fingerprint
+
+- name: "Get sha1 fingerprint of local cert"
+  delegate_to: localhost
+  ansible.builtin.command: "openssl x509 -in {{ unifi_cert_file }} -noout -subject"
+  register: raw_cert_subject
+
+- name: "Set subject fact"
+  set_fact:
+    cert_cn: "{{ raw_cert_subject.stdout.split('=')[2] | replace('*.', '') | trim }}"
+  when: raw_cert_subject
+
+- name: "Check if fingerprint or name already exists"
+  set_fact:
+    fingerprint_match: "{{ current_certs.json | selectattr('fingerprint', 'equalto', cert_fingerprint) | list | length > 0 }}"
+    cert_name_match: "{{ current_certs.json | selectattr('name', 'equalto', cert_cn) | list | length > 0 }}"
+    cert_name_match_id: "{{ (current_certs.json | selectattr('name', 'equalto', cert_cn) | map(attribute='id') | list | first) | default(none) }}"
+
+- name: "Delete existing cert if name but not fingerprint matches"
+  ansible.builtin.uri:
+    url: "https://{{ unifi_hostname }}/api/userCertificates/{{ cert_name_match_id }}"
+    method: DELETE
+    validate_certs: false
+    headers:
+      Cookie: "{{ unifi_login.cookies_string }}"
+      X-CSRF-Token: "{{ unifi_login.x_csrf_token }}"
+    status_code: 
+      - 204
+    return_content: true
+  register: unifi_cert_delete
+  when: cert_name_match and not fingerprint_match
+
+- name: "Upload certificate and key"
+  ansible.builtin.uri:
+    url: "https://{{ unifi_hostname }}/api/userCertificates"
+    method: POST
+    body_format: json
+    validate_certs: false
+    headers:
+      Cookie: "{{ unifi_login.cookies_string }}"
+      X-CSRF-Token: "{{ unifi_login.x_csrf_token }}"
+    body:
+      name: "{{ cert_cn }}"
+      cert: "{{ lookup('file', unifi_cert_file) }}"
+      key: "{{ lookup('file', unifi_key_file) }}"
+    status_code: 
+      - 200
+      - 201
+    return_content: true
+  register: unifi_cert_upload
+  when: not fingerprint_match
+
+- name: "Active uploaded certificate"
+  ansible.builtin.uri:
+    url: "https://{{ unifi_hostname }}/api/userCertificates/{{ unifi_cert_upload.json.id }}/status"
+    method: PUT
+    body_format: json
+    validate_certs: false
+    headers:
+      Cookie: "{{ unifi_login.cookies_string }}"
+      X-CSRF-Token: "{{ unifi_login.x_csrf_token }}"
+    body:
+      active: true
+    status_code: 
+      - 200
+    return_content: true
+  register: unifi_cert_activate
+  when: (unifi_cert_upload.failed is not defined or unifi_cert_upload.failed == false) and unifi_cert_upload.json.id is defined

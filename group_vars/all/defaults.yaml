@@ -1,0 +1,4 @@
+---
+# defaults options
+pull_certs: true
+deploy_certs: true

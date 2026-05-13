@@ -1,0 +1,114 @@
+---
+# this works but will most likely need some work
+# in case other services uses the same certs
+- name: "Get default cert"
+  become: yes
+  slurp:
+    src: "{{ synology_default_cert_file }}"
+  register: synology_cert_id_file
+
+- name: "Set default cert fact"
+  set_fact:
+    synology_cert_id: "{{ synology_cert_id_file['content'] | b64decode | trim }}"
+
+- name: "Get cert info"
+  become: yes
+  slurp:
+    src: "{{ synology_cert_info_file }}"
+  register: sybology_cert_info_file
+
+- name: "Set cert info fact"
+  set_fact:
+    synology_cert_info: "{{ sybology_cert_info_file['content'] | b64decode | trim }}"
+
+# do we really need this? (or is the services restarted/reloaded with the commands at the end)
+- name: "Build list of services and packages"
+  set_fact:
+    synology_pkg_services: "{{ synology_cert_info[synology_cert_id].services | selectattr('isPkg','equalto',true) | list }}"
+    synology_nonpkg_services: "{{ synology_cert_info[synology_cert_id].services | selectattr('isPkg','equalto',false) | list }}"
+    
+# some info:
+# https://github.com/catchdave/ssl-certs/blob/main/replace_synology_ssl_certs.sh
+
+- name: "Capture the login users home directory"
+  set_fact:
+    original_user_home: "{{ ansible_env.HOME }}"
+
+- name: "Upload certs to temporary directory"
+  ansible.builtin.copy:
+    src: "{{ cert_source_path }}/"
+    dest: "{{ original_user_home }}/{{ cert_dest_tmpdir }}"
+    directory_mode: '0700'
+    mode: '0600'
+
+- name: "Copy certs to default cert folder"
+  become: yes
+  ansible.builtin.copy:
+    src: "{{ original_user_home }}/{{ cert_dest_tmpdir }}/"
+    dest: "{{ synology_cert_path }}/{{ synology_cert_id }}"
+    remote_src: true
+    mode: '0400'
+
+- name: Find directories containing existing certificates
+  become: yes
+  ansible.builtin.find:
+    paths: "{{ synology_package_cert_path }}"
+    recurse: yes
+    patterns: "cert.pem"  # Targets the specific folders that actually hold certs
+    file_type: file
+  register: found_certs
+
+- name: show vars
+  debug:
+    msg: "packages: {{ synology_pkg_services }}"
+
+- name: Copy new certs to discovered package folders
+  become: yes
+  ansible.builtin.copy:
+    src: "{{ original_user_home }}/{{ cert_dest_tmpdir }}/"
+    # We use 'dirname' to get the folder path instead of the 'cert.pem' file path
+    dest: "{{ item.path | dirname }}/"
+    remote_src: true
+    mode: '0400'
+  loop: "{{ found_certs.files }}"
+  loop_control:
+    label: "{{ item.path | dirname }}"
+  notify: "Restart Synology Packages"
+
+- name: Sync Handlers
+  meta: flush_handlers # Optional: forces the restart to happen NOW before moving to next tasks
+
+# - name: Restart Synology packages if they are enabled
+#   become: yes
+#   ansible.builtin.shell: >
+#     /usr/syno/bin/synopkg is_onoff "{{ item }}" > /dev/null 2>&1 && 
+#     /usr/syno/bin/synopkg restart "{{ item }}"
+#   loop: "{{ synology_pkg_services }}"
+#   loop_control:
+#     label: "{{ item.service }}"
+#   register: pkg_restart_results
+#   changed_when: "pkg_restart_results.rc == 0"
+#   failed_when: false
+
+# restart services (list + the ones in INFO?)
+# restart packages? (seems like this isnt needed, or done when restarting nginx)
+# atleast, gen-all/restart nginx below does not replace certs for ftps (all isPkg = false? except system/default)
+# listed in: /usr/syno/etc/certificate/_archive/INFO
+# needed:
+#   copy certs ({cert,fullchain,privkey}.pem) to folder of the service (/usr/syno/etc/certificate/[service]/[service]/)
+#   restart service (synosystemctl restart [service]) (only for enabled services (listed with systemctl))
+
+
+- name: "Regenerate certs for difference services" # only needed if using as reverse proxy?
+  become: yes
+  ansible.builtin.command: "/usr/syno/bin/synow3tool --gen-all"
+
+# this will copy certs to /usr/syno/etc/certificate/system/default as well
+- name: "Restart nginx"
+  become: yes
+  ansible.builtin.command: "/usr/syno/bin/synosystemctl restart nginx"
+
+- name: "Remove temporary cert folder"
+  ansible.builtin.file:
+    path: "{{ original_user_home }}/{{ cert_dest_tmpdir }}"
+    state: absent

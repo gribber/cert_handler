@@ -1,0 +1,9 @@
+- name: "Restart Synology Packages"
+  become: yes
+  ansible.builtin.shell: >
+    /usr/syno/bin/synopkg is_onoff "{{ item.service }}" > /dev/null 2>&1 && 
+    /usr/syno/bin/synopkg restart "{{ item.service }}"
+  loop: "{{ synology_pkg_services }}"
+  loop_control:
+    label: "{{ item.service }}"
+  failed_when: false

@@ -1,0 +1,9 @@
+---
+# local path to certs
+cert_source_path: /some/dir/certs
+
+# filename of certs
+cert: cert.pem
+chain: chain.pem
+fullchain: fullchain.pem
+key: privkey.pem

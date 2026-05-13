@@ -1,0 +1,5 @@
+---
+unifi_hostname: "{{ ansible_fqdn }}"
+unifi_cert_file: "{{ cert_source_path }}/{{ fullchain }}"
+unifi_key_file: "{{ cert_source_path }}/{{ key }}"
+

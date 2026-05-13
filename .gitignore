@@ -1,0 +1,6 @@
+*.retry
+**/vault.yaml
+cookie.txt
+howto.txt
+group_vars/all/paths.yaml
+roles/cert_puller/defaults/main.yaml
