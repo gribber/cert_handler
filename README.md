@@ -32,6 +32,9 @@ nas.somehost.se
 group_vars/all/paths.yaml
 roles/cert_puller/default/main.yaml
 
+#### Synology DSM
+SSH access needs to be enabled and a user added with sudo privileges, also home directories needs to be enabled.
+
 ### Example bash script to first pull certs and deploy if new ones was found
 Included in the repo, check_and_deploy.sh
 It will first check for new certs and retrieve them, if new ones was found, the second playbook
