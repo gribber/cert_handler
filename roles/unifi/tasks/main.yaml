@@ -1,7 +1,9 @@
 ---
 # uploads and activate a new cerfificate to a unifi cloudkey, supports ECC certs
 # todo:
-# some fail safe/sanity checks
+# some fail safe/sanity checks, when unexpected results returned from api etc
+# it does currently not check for certs with same fingerprints but different names
+# but should be fine as long as certs are not manually uploaded with custom names
 
 - name: "Login to cloudkey"
   ansible.builtin.uri:

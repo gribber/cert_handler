@@ -1,7 +1,6 @@
 ---
 # copy and install certs
-# this in an old version, does not support EC certs
-
+# this in an old version, does not support ECC certs, only RSA
 # esx 6.7 requires rsa certs
     
 # - name: check if crt exist
