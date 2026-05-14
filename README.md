@@ -4,7 +4,7 @@ I switched from opnsense/acme to Nginx Proxy Manager (NPM) to manage certificate
 creates ECC certs instead of RSA (the only supported type at the point of writing this) and by 
 that, forced me to rewrite most of the script I had been using with RSA certs.
 
-#### Current tested on following systems and versions, others might work as well
+### Current tested on following systems and versions, others might work as well
 - Unifi CloudKey Gen2 (4.4.3, 5.0.16)
 - Proxmox (9.1.1)
 - Synology NAS (DSM 7.2.2, 7.3.2)
@@ -28,23 +28,23 @@ pve2.somehost.se
 nas.somehost.se
 ```
 
-#### Configure these files before use, example files included
+### Configure these files before use, example files included
 group_vars/all/paths.yaml
 roles/cert_puller/default/main.yaml
 
-#### Synology DSM
+### Synology DSM
 SSH access needs to be enabled and a user added with sudo privileges, also home directories needs to be enabled.
 
-#### Example bash script to first pull certs and deploy if new ones was found
+### Example bash script to first pull certs and deploy if new ones was found
 Included in the repo, check_and_deploy.sh
 It will first check for new certs and retrieve them, if new ones was found, the second playbook
 which deploys the certs will be called.
 To be used with for example crontab 
 
-#### Another way to run
+### Another way to run
 It is to run deploy.yaml which handles both, but with some requirements if limits are used (localhost needs to be included)
 
-#### Vault
+### Vault
 You can use ansible-vault to store credentials if you want to run it from crontab
 
 this is just an example, may not be the best or the safest way
