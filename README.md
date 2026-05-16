@@ -28,6 +28,9 @@ pve2.somehost.se
 nas.somehost.se
 ```
 
+### Requirements
+You will need something external that handles renewal of certs, like NPM, acme.sh or whatever.
+
 ### Configure these files before use, example files included
 group_vars/all/paths.yaml
 roles/cert_puller/default/main.yaml
