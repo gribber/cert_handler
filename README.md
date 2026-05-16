@@ -42,7 +42,8 @@ which deploys the certs will be called.
 To be used with for example crontab 
 
 ### Another way to run
-It is to run deploy.yaml which handles both, but with some requirements if limits are used (localhost needs to be included)
+It is to run check_and_deploy.yaml which handles both if you rather use ansible all the way, but with some 
+requirements if limits are used (localhost needs to be included).
 
 ### Vault
 You can use ansible-vault to store credentials if you want to run it from crontab
