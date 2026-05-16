@@ -29,7 +29,9 @@ nas.somehost.se
 ```
 
 ### Requirements
-You will need something external that handles renewal of certs, like NPM, acme.sh or whatever.
+* You will need something external that handles renewal of certs, like NPM, acme.sh or whatever.
+* A user with permission to change certs for the cloudkey in the webgui
+* Users with ssh and sudo access to Synology, Proxmox and possible the NPM host (you can use ssh keys)
 
 ### Configure these files before use, example files included
 group_vars/all/paths.yaml
